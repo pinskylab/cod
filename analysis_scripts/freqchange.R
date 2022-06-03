@@ -314,6 +314,76 @@ abline(v=seq(0,23)+0.5,lty=2,lwd=0.5)
 abline(h=0,lty=2)
 legend(x=4,y=-0.2,legend=c("Canada 1940-2013 vs Norway 1907-2011","Canada 1940-2013 vs Norway 1907-2014","Norway 1907-2011 vs Norway 1907-2014","Canada 1940-2013 vs Norway 2011-2014"),col=c("blue","green","purple","orange"),pch=c(19,19,19,19))
 
+### covariance by genotype quality
+
+quals=read.table("data/Can40Loci_afreqs/out.lqual",header=T)
+
+covdf=data.frame(Can40_afreqs$CHROM,Can40_afreqs$FreqChange,Lof07_afreqs$FreqChange11,Lof07_afreqs$FreqChange14)
+covdf$qual=quals$QUAL
+covdf=na.omit(covdf)
+
+cordf.qual=data.frame(matrix(ncol=4,nrow=10))
+colnames(cordf.qual)=c("qualquant","avgqual","cor11","cor14")
+
+for (i in 1:10) {
+  quantile=i
+  cor_4011_quant=subset(covdf,qual<quantile(covdf$qual,quantile/10) & qual>=quantile(covdf$qual,quantile/10-0.1))
+  cordf.qual$qualquant[i]=quantile
+  cordf.qual$avgqual[i]=mean(cor_4011_quant$qual)
+  cordf.qual$cor11[i]=cov(cor_4011_quant$Can40_afreqs.FreqChange,cor_4011_quant$Lof07_afreqs.FreqChange11)/sqrt(var(cor_4011_quant$Can40_afreqs.FreqChange)*var(cor_4011_quant$Lof07_afreqs.FreqChange11))
+  cordf.qual$cor14[i]=cov(cor_4011_quant$Can40_afreqs.FreqChange,cor_4011_quant$Lof07_afreqs.FreqChange14)/sqrt(var(cor_4011_quant$Can40_afreqs.FreqChange)*var(cor_4011_quant$Lof07_afreqs.FreqChange14))
+}
+
+plot(x=NULL,y=NULL,xlim=c(0,11),ylim=c(-0.3,0.3),xlab="Quality Quantile",ylab="Convergence Correlation")
+points(x=seq(1,10)-0.1,y=cordf.qual$cor11,col="blue",pch=19)
+points(x=seq(1,10)+0.1,y=cordf.qual$cor14,col="green",pch=19)
+abline(v=seq(0,10)+0.5,lty=2,lwd=0.5)
+abline(h=0,lty=2)
+legend(x=8,y=-0.05,legend=c("Canada-Norway 2011","Canada-Norway 2014"),col=c("blue","green"),pch=c(19,19))
+
+plot(x=NULL,y=NULL,xlim=c(0,43000),ylim=c(-0.3,0.3),xlab="Quality",ylab="Convergence Correlation")
+points(x=cordf.qual$avgqual,y=cordf.qual$cor11,col="blue",pch=19)
+points(x=cordf.qual$avgqual,y=cordf.qual$cor14,col="green",pch=19)
+abline(v=seq(0,10)+0.5,lty=2,lwd=0.5)
+abline(h=0,lty=2)
+legend(x=8,y=-0.05,legend=c("Canada-Norway 2011","Canada-Norway 2014"),col=c("blue","green"),pch=c(19,19))
+
+#### windowed ####
+
+# Can40_afreqs$FreqChange
+# Lof07_afreqs$FreqChange11
+# Lof07_afreqs$FreqChange14
+# 
+# covdf=data.frame(Can40_afreqs$CHROM,Can40_afreqs$FreqChange,Lof07_afreqs$FreqChange11,Lof07_afreqs$FreqChange14)
+# 
+# covdf=na.omit(covdf)
+# 
+# cor_Can40_Lof11=cov(covdf$Can40_afreqs.FreqChange,covdf$Lof07_afreqs.FreqChange11)/sqrt(var(covdf$Can40_afreqs.FreqChange)*var(covdf$Lof07_afreqs.FreqChange11))
+# cor_Can40_Lof14=cov(covdf$Can40_afreqs.FreqChange,covdf$Lof07_afreqs.FreqChange14)/sqrt(var(covdf$Can40_afreqs.FreqChange)*var(covdf$Lof07_afreqs.FreqChange14))
+# 
+# cor_all=(cov(covdf$Can40_afreqs.FreqChange,covdf$Lof07_afreqs.FreqChange11)+cov(covdf$Can40_afreqs.FreqChange,covdf$Lof07_afreqs.FreqChange14))/(sqrt(var(covdf$Can40_afreqs.FreqChange)*var(covdf$Lof07_afreqs.FreqChange11))+sqrt(var(covdf$Can40_afreqs.FreqChange)*var(covdf$Lof07_afreqs.FreqChange14)))
+# 
+# LGs=unique(covdf$Can40_afreqs.CHROM)
+# 
+# cordf=data.frame(matrix(ncol=3,nrow=23))
+# colnames(cordf)=c("LG","cor11","cor14")
+# 
+# for (i in 1:(length(LGs)-1)) {
+#   c=LGs[i]
+#   cor_4011_LG=covdf[which(covdf$Can40_afreqs.CHROM==c),]
+#   cordf$LG[i]=c
+#   cordf$cor11[i]=cov(cor_4011_LG$Can40_afreqs.FreqChange,cor_4011_LG$Lof07_afreqs.FreqChange11)/sqrt(var(cor_4011_LG$Can40_afreqs.FreqChange)*var(cor_4011_LG$Lof07_afreqs.FreqChange11))
+#   cordf$cor14[i]=cov(cor_4011_LG$Can40_afreqs.FreqChange,cor_4011_LG$Lof07_afreqs.FreqChange14)/sqrt(var(cor_4011_LG$Can40_afreqs.FreqChange)*var(cor_4011_LG$Lof07_afreqs.FreqChange14))
+# }
+# 
+# plot(x=NULL,y=NULL,xlim=c(0,24),ylim=c(-0.15,0.15),xlab="Linkage Group",ylab="Convergence Correlation")
+# points(x=seq(1,23)-0.1,y=cordf$cor11,col="blue",pch=19)
+# points(x=seq(1,23)+0.1,y=cordf$cor14,col="green",pch=19)
+# abline(v=seq(0,23)+0.5,lty=2,lwd=0.5)
+# abline(h=0,lty=2)
+# legend(x=8,y=-0.05,legend=c("Canada-Norway 2011","Canada-Norway 2014"),col=c("blue","green"),pch=c(19,19))
+
+
 ##### CV for allele freq change - Canada
 
 Can40_CVcalc=data.frame(matrix(nrow=length(unique(Can40_afreqs$ALT_FREQS)),ncol=5))
@@ -369,7 +439,6 @@ ggplot(data = vgroup, mapping = aes(x=tag,y=CV)) +
   labs(x='Canada 1940 Major Allele Frequency',y='CV of Allele Frequency Change') +
   guides(color=FALSE) +
   theme_minimal()
-
 
 ##### CV for allele freq change - Norway
 
@@ -532,3 +601,738 @@ points(Lof07_CVcalc$majaf,Lof07_CVcalc$CV11,cex=log10(Lof07_CVcalc$n11)/2,col="b
 plot(x=NULL,y=NULL,xlim=c(0.49,1.01),ylim=c(0,1.5),xlab="",ylab="CV in Frequency Change, Norway 1907-2014")
 points(Lof07_CVcalc$majaf,Lof07_CVcalc$CV14,cex=log10(Lof07_CVcalc$n14)/2,col="green")
 
+
+###### change vs quality
+
+nrow(Lof07_afreqs)
+nrow(Can40_afreqs)
+Can40_afreqs$qual=quals$QUAL
+
+tags <- c("[0-0.1)","[0.1-0.2)", "[0.2-0.3)", "[0.3-0.4)", "[0.4-0.5)", "[0.5-0.6)","[0.6-0.7)", "[0.7-0.8)","[0.8-0.9)", "[0.9-1.0)")
+
+v <- Can40_afreqs %>% select(qual,AbsFreqChange) #pick the variable 
+vgroup <- as_tibble(v) %>% 
+  mutate(tag = case_when(
+    qual < quantile(Can40_afreqs$qual,0.1) ~ tags[1],
+    qual >= quantile(Can40_afreqs$qual,0.1) & qual < quantile(Can40_afreqs$qual,0.2) ~ tags[2],
+    qual >= quantile(Can40_afreqs$qual,0.2) & qual < quantile(Can40_afreqs$qual,0.3) ~ tags[3],
+    qual >= quantile(Can40_afreqs$qual,0.3) & qual < quantile(Can40_afreqs$qual,0.4) ~ tags[4],
+    qual >= quantile(Can40_afreqs$qual,0.4) & qual < quantile(Can40_afreqs$qual,0.5) ~ tags[5],
+    qual >= quantile(Can40_afreqs$qual,0.5) & qual < quantile(Can40_afreqs$qual,0.6) ~ tags[6],
+    qual >= quantile(Can40_afreqs$qual,0.6) & qual < quantile(Can40_afreqs$qual,0.7) ~ tags[7],
+    qual >= quantile(Can40_afreqs$qual,0.7) & qual < quantile(Can40_afreqs$qual,0.8) ~ tags[8],
+    qual >= quantile(Can40_afreqs$qual,0.8) & qual < quantile(Can40_afreqs$qual,0.9) ~ tags[9],
+    qual >= quantile(Can40_afreqs$qual,0.9) ~ tags[10]
+  ))
+summary(vgroup)
+
+vgroup$tag <- factor(vgroup$tag,
+                     levels = tags,
+                     ordered = FALSE)
+summary(vgroup$tag)
+
+
+ggplot(data = vgroup, mapping = aes(x=tag,y=AbsFreqChange)) + 
+  geom_jitter(aes(color='blue'),alpha=0.2) +
+  geom_boxplot(fill="bisque",color="black",alpha=0.3) + 
+  labs(x='SNP Quality Quantile',y='Absolute Frequency Change - Canado 1940-2013') +
+  guides(color=FALSE) +
+  theme_minimal()
+
+
+Lof07_afreqs$qual=quals$QUAL
+
+tags <- c("[0-0.1)","[0.1-0.2)", "[0.2-0.3)", "[0.3-0.4)", "[0.4-0.5)", "[0.5-0.6)","[0.6-0.7)", "[0.7-0.8)","[0.8-0.9)", "[0.9-1.0)")
+
+v <- Lof07_afreqs %>% select(qual,AbsFreqChange11) #pick the variable 
+vgroup <- as_tibble(v) %>% 
+  mutate(tag = case_when(
+    qual < quantile(Can40_afreqs$qual,0.1) ~ tags[1],
+    qual >= quantile(Can40_afreqs$qual,0.1) & qual < quantile(Can40_afreqs$qual,0.2) ~ tags[2],
+    qual >= quantile(Can40_afreqs$qual,0.2) & qual < quantile(Can40_afreqs$qual,0.3) ~ tags[3],
+    qual >= quantile(Can40_afreqs$qual,0.3) & qual < quantile(Can40_afreqs$qual,0.4) ~ tags[4],
+    qual >= quantile(Can40_afreqs$qual,0.4) & qual < quantile(Can40_afreqs$qual,0.5) ~ tags[5],
+    qual >= quantile(Can40_afreqs$qual,0.5) & qual < quantile(Can40_afreqs$qual,0.6) ~ tags[6],
+    qual >= quantile(Can40_afreqs$qual,0.6) & qual < quantile(Can40_afreqs$qual,0.7) ~ tags[7],
+    qual >= quantile(Can40_afreqs$qual,0.7) & qual < quantile(Can40_afreqs$qual,0.8) ~ tags[8],
+    qual >= quantile(Can40_afreqs$qual,0.8) & qual < quantile(Can40_afreqs$qual,0.9) ~ tags[9],
+    qual >= quantile(Can40_afreqs$qual,0.9) ~ tags[10]
+  ))
+summary(vgroup)
+
+vgroup$tag <- factor(vgroup$tag,
+                     levels = tags,
+                     ordered = FALSE)
+summary(vgroup$tag)
+
+
+ggplot(data = vgroup, mapping = aes(x=tag,y=AbsFreqChange11)) + 
+  geom_jitter(aes(color='blue'),alpha=0.2) +
+  geom_boxplot(fill="bisque",color="black",alpha=0.3) + 
+  labs(x='SNP Quality Quantile',y='Absolute Frequency Change - Norway 1907-2011') +
+  guides(color=FALSE) +
+  theme_minimal()
+
+
+
+v <- Lof07_afreqs %>% select(qual,AbsFreqChange14) #pick the variable 
+vgroup <- as_tibble(v) %>% 
+  mutate(tag = case_when(
+    qual < quantile(Can40_afreqs$qual,0.1) ~ tags[1],
+    qual >= quantile(Can40_afreqs$qual,0.1) & qual < quantile(Can40_afreqs$qual,0.2) ~ tags[2],
+    qual >= quantile(Can40_afreqs$qual,0.2) & qual < quantile(Can40_afreqs$qual,0.3) ~ tags[3],
+    qual >= quantile(Can40_afreqs$qual,0.3) & qual < quantile(Can40_afreqs$qual,0.4) ~ tags[4],
+    qual >= quantile(Can40_afreqs$qual,0.4) & qual < quantile(Can40_afreqs$qual,0.5) ~ tags[5],
+    qual >= quantile(Can40_afreqs$qual,0.5) & qual < quantile(Can40_afreqs$qual,0.6) ~ tags[6],
+    qual >= quantile(Can40_afreqs$qual,0.6) & qual < quantile(Can40_afreqs$qual,0.7) ~ tags[7],
+    qual >= quantile(Can40_afreqs$qual,0.7) & qual < quantile(Can40_afreqs$qual,0.8) ~ tags[8],
+    qual >= quantile(Can40_afreqs$qual,0.8) & qual < quantile(Can40_afreqs$qual,0.9) ~ tags[9],
+    qual >= quantile(Can40_afreqs$qual,0.9) ~ tags[10]
+  ))
+summary(vgroup)
+
+vgroup$tag <- factor(vgroup$tag,
+                     levels = tags,
+                     ordered = FALSE)
+summary(vgroup$tag)
+
+
+ggplot(data = vgroup, mapping = aes(x=tag,y=AbsFreqChange14)) + 
+  geom_jitter(aes(color='blue'),alpha=0.2) +
+  geom_boxplot(fill="bisque",color="black",alpha=0.3) + 
+  labs(x='SNP Quality Quantile',y='Absolute Frequency Change - Norway 1907-2014') +
+  guides(color=FALSE) +
+  theme_minimal()
+
+
+
+
+
+###############################
+###### no filter ##############
+###############################
+
+
+Can40_afreqs=read.table("data/AllLoci_afreqs/plink2.Can40.afreq",header=T)
+Can13_afreqs=read.table("data/AllLoci_afreqs/plink2.Can13.afreq",header=T)
+
+Can40_afreqs$ContFreq=Can13_afreqs$ALT_FREQS
+Can40_afreqs$FreqChange=Can40_afreqs$ContFreq-Can40_afreqs$ALT_FREQS
+
+#plot(Can40_afreqs$ALT_FREQS,Can40_afreqs$FreqChange,pch=16,col="gray",cex=0.3,xlab="Canada 1940 Frequency",ylab="Relative Change in Frequency")
+#plot(Can40_afreqs$ALT_FREQS,abs(Can40_afreqs$FreqChange),pch=16,col="gray",cex=0.3,xlab="Canada 1940 Frequency",ylab="Absolute Change in Frequency")
+
+Can40_afreqs$AbsFreqChange=abs(Can40_afreqs$ContFreq-Can40_afreqs$ALT_FREQS)
+
+Lof07_afreqs=read.table("data/AllLoci_afreqs/plink2.Lof07.afreq",header=T)
+Lof11_afreqs=read.table("data/AllLoci_afreqs/plink2.Lof11.afreq",header=T)
+Lof14_afreqs=read.table("data/AllLoci_afreqs/plink2.Lof14.afreq",header=T)
+
+Lof07_afreqs$Freq11=Lof11_afreqs$ALT_FREQS
+Lof07_afreqs$Freq14=Lof14_afreqs$ALT_FREQS
+
+Lof07_afreqs$FreqChange11=Lof07_afreqs$Freq11-Lof07_afreqs$ALT_FREQS
+Lof07_afreqs$FreqChange14=Lof07_afreqs$Freq14-Lof07_afreqs$ALT_FREQS
+
+
+#plot(Lof07_afreqs$ALT_FREQS,Lof07_afreqs$FreqChange11,pch=16,col="gray",cex=0.3,xlab="Norway 1907 Frequency",ylab="Relative Change in Frequency, 2011")
+#plot(Lof07_afreqs$ALT_FREQS,abs(Lof07_afreqs$FreqChange11),pch=16,col="gray",cex=0.3,xlab="Norway 1907 Frequency",ylab="Absolute Change in Frequency, 2011")
+#plot(Lof07_afreqs$ALT_FREQS,Lof07_afreqs$FreqChange14,pch=16,col="gray",cex=0.3,xlab="Norway 1907 Frequency",ylab="Relative Change in Frequency, 2014")
+#plot(Lof07_afreqs$ALT_FREQS,abs(Lof07_afreqs$FreqChange14),pch=16,col="gray",cex=0.3,xlab="Norway 1907 Frequency",ylab="Absolute Change in Frequency, 2014")
+
+### change covariance - Canada vs Norways!
+
+Can40_afreqs$FreqChange
+Lof07_afreqs$FreqChange11
+Lof07_afreqs$FreqChange14
+
+covdf=data.frame(Can40_afreqs$CHROM,Can40_afreqs$FreqChange,Lof07_afreqs$FreqChange11,Lof07_afreqs$FreqChange14)
+
+covdf=na.omit(covdf)
+
+cor_Can40_Lof11=cov(covdf$Can40_afreqs.FreqChange,covdf$Lof07_afreqs.FreqChange11)/sqrt(var(covdf$Can40_afreqs.FreqChange)*var(covdf$Lof07_afreqs.FreqChange11))
+cor_Can40_Lof14=cov(covdf$Can40_afreqs.FreqChange,covdf$Lof07_afreqs.FreqChange14)/sqrt(var(covdf$Can40_afreqs.FreqChange)*var(covdf$Lof07_afreqs.FreqChange14))
+
+cor_all=(cov(covdf$Can40_afreqs.FreqChange,covdf$Lof07_afreqs.FreqChange11)+cov(covdf$Can40_afreqs.FreqChange,covdf$Lof07_afreqs.FreqChange14))/(sqrt(var(covdf$Can40_afreqs.FreqChange)*var(covdf$Lof07_afreqs.FreqChange11))+sqrt(var(covdf$Can40_afreqs.FreqChange)*var(covdf$Lof07_afreqs.FreqChange14)))
+
+LGs=unique(covdf$Can40_afreqs.CHROM)
+
+cordf=data.frame(matrix(ncol=3,nrow=23))
+colnames(cordf)=c("LG","cor11","cor14")
+
+for (i in 1:(length(LGs)-1)) {
+  c=LGs[i]
+  cor_4011_LG=covdf[which(covdf$Can40_afreqs.CHROM==c),]
+  cordf$LG[i]=c
+  cordf$cor11[i]=cov(cor_4011_LG$Can40_afreqs.FreqChange,cor_4011_LG$Lof07_afreqs.FreqChange11)/sqrt(var(cor_4011_LG$Can40_afreqs.FreqChange)*var(cor_4011_LG$Lof07_afreqs.FreqChange11))
+  cordf$cor14[i]=cov(cor_4011_LG$Can40_afreqs.FreqChange,cor_4011_LG$Lof07_afreqs.FreqChange14)/sqrt(var(cor_4011_LG$Can40_afreqs.FreqChange)*var(cor_4011_LG$Lof07_afreqs.FreqChange14))
+}
+
+plot(x=NULL,y=NULL,xlim=c(0,24),ylim=c(-0.15,0.15),xlab="Linkage Group",ylab="Convergence Correlation")
+points(x=seq(1,23)-0.1,y=cordf$cor11,col="blue",pch=19)
+points(x=seq(1,23)+0.1,y=cordf$cor14,col="green",pch=19)
+abline(v=seq(0,23)+0.5,lty=2,lwd=0.5)
+abline(h=0,lty=2)
+legend(x=8,y=-0.05,legend=c("Canada-Norway 2011","Canada-Norway 2014"),col=c("blue","green"),pch=c(19,19))
+
+### change covariance - Norway07-11 vs Norway01-14!
+
+cor_Lof11_Lof14=cov(covdf$Lof07_afreqs.FreqChange11,covdf$Lof07_afreqs.FreqChange14)/sqrt(var(covdf$Lof07_afreqs.FreqChange11)*var(covdf$Lof07_afreqs.FreqChange14))
+
+LGs=unique(covdf$Can40_afreqs.CHROM)
+
+cordf1114=data.frame(matrix(ncol=3,nrow=23))
+colnames(cordf1114)=c("LG","cor1114")
+
+for (i in 1:(length(LGs)-1)) {
+  c=LGs[i]
+  cor_4011_LG=covdf[which(covdf$Can40_afreqs.CHROM==c),]
+  cordf1114$LG[i]=c
+  cordf1114$cor1114[i]=cov(cor_4011_LG$Lof07_afreqs.FreqChange11,cor_4011_LG$Lof07_afreqs.FreqChange14)/sqrt(var(cor_4011_LG$Lof07_afreqs.FreqChange11)*var(cor_4011_LG$Lof07_afreqs.FreqChange14))
+}
+
+plot(x=NULL,y=NULL,xlim=c(0,24),ylim=c(-0.1,0.8),xlab="Linkage Group",ylab="Convergence Correlation")
+points(x=seq(1,23)-0.1,y=cordf1114$cor1114,col="purple",pch=19)
+abline(v=seq(0,23)+0.5,lty=2,lwd=0.5)
+abline(h=0,lty=2)
+legend(x=8,y=0.05,legend=c("Norway 2011 - Norway 2014"),col=c("purple"),pch=c(19,19))
+
+### change covariance - Norway11-14 vs Canada!
+
+Lof07_afreqs$FreqChange1114=Lof07_afreqs$Freq14-Lof07_afreqs$Freq11
+
+covdf1114=data.frame(Can40_afreqs$CHROM,Can40_afreqs$FreqChange,Lof07_afreqs$FreqChange1114)
+
+covdf1114=na.omit(covdf1114)
+
+cor_Lof1114_Can=cov(covdf1114$Lof07_afreqs.FreqChange1114,covdf1114$Can40_afreqs.FreqChange)/sqrt(var(covdf1114$Lof07_afreqs.FreqChange1114)*var(covdf1114$Can40_afreqs.FreqChange))
+
+LGs=unique(covdf1114$Can40_afreqs.CHROM)
+
+cordfCan1114=data.frame(matrix(ncol=3,nrow=23))
+colnames(cordfCan1114)=c("LG","cor1114")
+
+for (i in 1:(length(LGs)-1)) {
+  c=LGs[i]
+  cor_4011_LG=covdf1114[which(covdf1114$Can40_afreqs.CHROM==c),]
+  cordfCan1114$LG[i]=c
+  cordfCan1114$cor1114[i]=cov(cor_4011_LG$Lof07_afreqs.FreqChange1114,cor_4011_LG$Can40_afreqs.FreqChange)/sqrt(var(cor_4011_LG$Lof07_afreqs.FreqChange1114)*var(cor_4011_LG$Can40_afreqs.FreqChange))
+}
+
+plot(x=NULL,y=NULL,xlim=c(0,24),ylim=c(-0.65,0.65),xlab="Linkage Group",ylab="Convergence Correlation")
+points(x=seq(1,23)-0.1,y=cordfCan1114$cor1114,col="purple",pch=19)
+abline(v=seq(0,23)+0.5,lty=2,lwd=0.5)
+abline(h=0,lty=2)
+legend(x=8,y=-0.05,legend=c("Norway 2011 - Norway 2014"),col=c("purple"),pch=c(19,19))
+
+#### compare ####
+
+plot(x=NULL,y=NULL,xlim=c(0,24),ylim=c(-0.3,0.8),xlab="Linkage Group",ylab="Convergence Correlation")
+points(x=seq(1,23),y=cordf1114$cor1114,col="purple",pch=19)
+points(x=seq(1,23)-0.1,y=cordf$cor11,col="blue",pch=19)
+points(x=seq(1,23)-0.1,y=cordfCan1114$cor1114,col="orange",pch=19)
+points(x=seq(1,23)+0.1,y=cordf$cor14,col="green",pch=19)
+abline(v=seq(0,23)+0.5,lty=2,lwd=0.5)
+abline(h=0,lty=2)
+legend(x=4,y=0.6,legend=c("Canada 1940-2013 vs Norway 1907-2011","Canada 1940-2013 vs Norway 1907-2014","Norway 1907-2011 vs Norway 1907-2014","Canada 1940-2013 vs Norway 2011-2014"),col=c("blue","green","purple","orange"),pch=c(19,19,19,19))
+
+### covariance by genotype quality
+
+quals=read.table("data/AllLoci_afreqs/out.lqual",header=T)
+
+covdf=data.frame(Can40_afreqs$CHROM,Can40_afreqs$FreqChange,Lof07_afreqs$FreqChange11,Lof07_afreqs$FreqChange14)
+covdf$qual=quals$QUAL
+covdf=na.omit(covdf)
+
+cordf.qual=data.frame(matrix(ncol=4,nrow=10))
+colnames(cordf.qual)=c("qualquant","avgqual","cor11","cor14")
+
+for (i in 1:10) {
+  quantile=i
+  cor_4011_quant=subset(covdf,qual<quantile(covdf$qual,quantile/10) & qual>=quantile(covdf$qual,quantile/10-0.1))
+  cordf.qual$qualquant[i]=quantile
+  cordf.qual$avgqual[i]=mean(cor_4011_quant$qual)
+  cordf.qual$cor11[i]=cov(cor_4011_quant$Can40_afreqs.FreqChange,cor_4011_quant$Lof07_afreqs.FreqChange11)/sqrt(var(cor_4011_quant$Can40_afreqs.FreqChange)*var(cor_4011_quant$Lof07_afreqs.FreqChange11))
+  cordf.qual$cor14[i]=cov(cor_4011_quant$Can40_afreqs.FreqChange,cor_4011_quant$Lof07_afreqs.FreqChange14)/sqrt(var(cor_4011_quant$Can40_afreqs.FreqChange)*var(cor_4011_quant$Lof07_afreqs.FreqChange14))
+}
+
+plot(x=NULL,y=NULL,xlim=c(0,11),ylim=c(-0.3,0.3),xlab="Quality Quantile",ylab="Convergence Correlation")
+points(x=seq(1,10)-0.1,y=cordf.qual$cor11,col="blue",pch=19)
+points(x=seq(1,10)+0.1,y=cordf.qual$cor14,col="green",pch=19)
+abline(v=seq(0,10)+0.5,lty=2,lwd=0.5)
+abline(h=0,lty=2)
+legend(x=8,y=-0.05,legend=c("Canada-Norway 2011","Canada-Norway 2014"),col=c("blue","green"),pch=c(19,19))
+
+plot(x=NULL,y=NULL,xlim=c(0,43000),ylim=c(-0.3,0.3),xlab="Quality",ylab="Convergence Correlation")
+points(x=cordf.qual$avgqual,y=cordf.qual$cor11,col="blue",pch=19)
+points(x=cordf.qual$avgqual,y=cordf.qual$cor14,col="green",pch=19)
+abline(v=seq(0,10)+0.5,lty=2,lwd=0.5)
+abline(h=0,lty=2)
+legend(x=8,y=-0.05,legend=c("Canada-Norway 2011","Canada-Norway 2014"),col=c("blue","green"),pch=c(19,19))
+
+### change vs frequency - Canada
+
+tags <- c("[0-0.1)","[0.1-0.2)", "[0.2-0.3)", "[0.3-0.4)", "[0.4-0.5)", "[0.5-0.6)","[0.6-0.7)", "[0.7-0.8)","[0.8-0.9)", "[0.9-1.0)")
+
+v <- Can40_afreqs %>% select(ALT_FREQS,AbsFreqChange) #pick the variable 
+vgroup <- as_tibble(v) %>% 
+  mutate(tag = case_when(
+    ALT_FREQS < 0.1 ~ tags[1],
+    ALT_FREQS >= 0.1 & ALT_FREQS < 0.2 ~ tags[2],
+    ALT_FREQS >= 0.2 & ALT_FREQS < 0.3 ~ tags[3],
+    ALT_FREQS >= 0.3 & ALT_FREQS < 0.4 ~ tags[4],
+    ALT_FREQS >= 0.4 & ALT_FREQS < 0.5 ~ tags[5],
+    ALT_FREQS >= 0.5 & ALT_FREQS < 0.6 ~ tags[6],
+    ALT_FREQS >= 0.6 & ALT_FREQS < 0.7 ~ tags[7],
+    ALT_FREQS >= 0.7 & ALT_FREQS < 0.8 ~ tags[8],
+    ALT_FREQS >= 0.8 & ALT_FREQS < 0.9 ~ tags[9],
+    ALT_FREQS >= 0.9 ~ tags[10]
+  ))
+summary(vgroup)
+
+vgroup$tag <- factor(vgroup$tag,
+                     levels = tags,
+                     ordered = FALSE)
+summary(vgroup$tag)
+
+
+ggplot(data = vgroup, mapping = aes(x=tag,y=AbsFreqChange)) + 
+  geom_jitter(aes(color='blue'),alpha=0.2) +
+  geom_boxplot(fill="bisque",color="black",alpha=0.3) + 
+  labs(x='Canada 1940 Frequency',y='Absolute Frequency Change') +
+  guides(color=FALSE) +
+  theme_minimal()
+
+#### change vs major frequency - Canada
+
+Can40_afreqs$RefFreq=1-Can40_afreqs$ALT_FREQS
+
+Can40_afreqs %>% rowwise() %>% mutate(MajorAF=max(RefFreq,ALT_FREQS)) -> Can40MAF
+
+tags <- c("[0.5-0.55)","[0.55-0.6)", "[0.6-0.65)", "[0.65-0.7)", "[0.7-0.75)", "[0.75-0.8)","[0.8-0.85)", "[0.85-0.9)","[0.9-0.95)", "[0.95-1.0)")
+
+v <- Can40MAF %>% select(MajorAF,AbsFreqChange) #pick the variable 
+vgroup <- as_tibble(v) %>% 
+  mutate(tag = case_when(
+    MajorAF < 0.55 ~ tags[1],
+    MajorAF >= 0.55 & MajorAF < 0.6 ~ tags[2],
+    MajorAF >= 0.6 & MajorAF < 0.65 ~ tags[3],
+    MajorAF >= 0.65 & MajorAF < 0.7 ~ tags[4],
+    MajorAF >= 0.7 & MajorAF < 0.75 ~ tags[5],
+    MajorAF >= 0.75 & MajorAF < 0.8 ~ tags[6],
+    MajorAF >= 0.8 & MajorAF < 0.85 ~ tags[7],
+    MajorAF >= 0.85 & MajorAF < 0.9 ~ tags[8],
+    MajorAF >= 0.9 & MajorAF < 0.95 ~ tags[9],
+    MajorAF >= 0.95 ~ tags[10]
+  ))
+summary(vgroup)
+
+vgroup$tag <- factor(vgroup$tag,
+                     levels = tags,
+                     ordered = FALSE)
+summary(vgroup$tag)
+
+
+ggplot(data = vgroup, mapping = aes(x=tag,y=AbsFreqChange)) + 
+  geom_jitter(aes(color='blue'),alpha=0.2) +
+  geom_boxplot(fill="bisque",color="black",alpha=0.3) + 
+  labs(x='Canada 1940 Major Allele Frequency',y='Absolute Frequency Change') +
+  guides(color=FALSE) +
+  theme_minimal()
+
+
+
+####### Change vs frequency - Norways
+
+Lof07_afreqs$RefFreq=1-Lof07_afreqs$ALT_FREQS
+
+Lof07_afreqs$AbsFreqChange11=abs(Lof07_afreqs$FreqChange11)
+
+Lof07_afreqs$AbsFreqChange14=abs(Lof07_afreqs$FreqChange14)
+
+Lof07_afreqs %>% rowwise() %>% mutate(MajorAF=max(RefFreq,ALT_FREQS)) -> Lof07MAF
+
+tags <- c("[0.5-0.55)","[0.55-0.6)", "[0.6-0.65)", "[0.65-0.7)", "[0.7-0.75)", "[0.75-0.8)","[0.8-0.85)", "[0.85-0.9)","[0.9-0.95)", "[0.95-1.0)")
+
+v <- Lof07MAF %>% select(MajorAF,AbsFreqChange11) #pick the variable 
+vgroup <- as_tibble(v) %>% 
+  mutate(tag = case_when(
+    MajorAF < 0.55 ~ tags[1],
+    MajorAF >= 0.55 & MajorAF < 0.6 ~ tags[2],
+    MajorAF >= 0.6 & MajorAF < 0.65 ~ tags[3],
+    MajorAF >= 0.65 & MajorAF < 0.7 ~ tags[4],
+    MajorAF >= 0.7 & MajorAF < 0.75 ~ tags[5],
+    MajorAF >= 0.75 & MajorAF < 0.8 ~ tags[6],
+    MajorAF >= 0.8 & MajorAF < 0.85 ~ tags[7],
+    MajorAF >= 0.85 & MajorAF < 0.9 ~ tags[8],
+    MajorAF >= 0.9 & MajorAF < 0.95 ~ tags[9],
+    MajorAF >= 0.95 ~ tags[10]
+  ))
+summary(vgroup)
+
+vgroup$tag <- factor(vgroup$tag,
+                     levels = tags,
+                     ordered = FALSE)
+summary(vgroup$tag)
+
+
+ggplot(data = vgroup, mapping = aes(x=tag,y=AbsFreqChange11)) + 
+  geom_jitter(aes(color='blue'),alpha=0.2) +
+  geom_boxplot(fill="bisque",color="black",alpha=0.3) + 
+  labs(x='Norway 1907 Major Allele Frequency',y='Absolute Frequency Change - 2011') +
+  guides(color="none") +
+  theme_minimal()
+
+
+
+
+v <- Lof07MAF %>% select(MajorAF,AbsFreqChange14) #pick the variable 
+vgroup <- as_tibble(v) %>% 
+  mutate(tag = case_when(
+    MajorAF < 0.55 ~ tags[1],
+    MajorAF >= 0.55 & MajorAF < 0.6 ~ tags[2],
+    MajorAF >= 0.6 & MajorAF < 0.65 ~ tags[3],
+    MajorAF >= 0.65 & MajorAF < 0.7 ~ tags[4],
+    MajorAF >= 0.7 & MajorAF < 0.75 ~ tags[5],
+    MajorAF >= 0.75 & MajorAF < 0.8 ~ tags[6],
+    MajorAF >= 0.8 & MajorAF < 0.85 ~ tags[7],
+    MajorAF >= 0.85 & MajorAF < 0.9 ~ tags[8],
+    MajorAF >= 0.9 & MajorAF < 0.95 ~ tags[9],
+    MajorAF >= 0.95 ~ tags[10]
+  ))
+summary(vgroup)
+
+vgroup$tag <- factor(vgroup$tag,
+                     levels = tags,
+                     ordered = FALSE)
+summary(vgroup$tag)
+
+
+ggplot(data = vgroup, mapping = aes(x=tag,y=AbsFreqChange14)) + 
+  geom_jitter(aes(color='blue'),alpha=0.2) +
+  geom_boxplot(fill="bisque",color="black",alpha=0.3) + 
+  labs(x='Norway 1907 Major Allele Frequency',y='Absolute Frequency Change - 2014') +
+  guides(color="none") +
+  theme_minimal()
+
+
+#### change vs major frequency - Norway contemps
+
+Lof07_afreqs$FreqChangeContemp=Lof07_afreqs$Freq14-Lof07_afreqs$Freq11
+
+Lof07_afreqs$RefFreq11=1-Lof07_afreqs$Freq11
+
+Lof07_afreqs$AbsFreqChangeContemp=abs(Lof07_afreqs$FreqChangeContemp)
+
+Lof07_afreqs %>% rowwise() %>% mutate(MajorAF11=max(RefFreq11,Freq11)) -> Lof11MAF
+
+tags <- c("[0.5-0.55)","[0.55-0.6)", "[0.6-0.65)", "[0.65-0.7)", "[0.7-0.75)", "[0.75-0.8)","[0.8-0.85)", "[0.85-0.9)","[0.9-0.95)", "[0.95-1.0)")
+
+v <- Lof11MAF %>% select(MajorAF11,AbsFreqChangeContemp) #pick the variable 
+vgroup <- as_tibble(v) %>% 
+  mutate(tag = case_when(
+    MajorAF11 < 0.55 ~ tags[1],
+    MajorAF11 >= 0.55 & MajorAF11 < 0.6 ~ tags[2],
+    MajorAF11 >= 0.6 & MajorAF11 < 0.65 ~ tags[3],
+    MajorAF11 >= 0.65 & MajorAF11 < 0.7 ~ tags[4],
+    MajorAF11 >= 0.7 & MajorAF11 < 0.75 ~ tags[5],
+    MajorAF11 >= 0.75 & MajorAF11 < 0.8 ~ tags[6],
+    MajorAF11 >= 0.8 & MajorAF11 < 0.85 ~ tags[7],
+    MajorAF11 >= 0.85 & MajorAF11 < 0.9 ~ tags[8],
+    MajorAF11 >= 0.9 & MajorAF11 < 0.95 ~ tags[9],
+    MajorAF11 >= 0.95 ~ tags[10]
+  ))
+summary(vgroup)
+
+vgroup$tag <- factor(vgroup$tag,
+                     levels = tags,
+                     ordered = FALSE)
+summary(vgroup$tag)
+
+
+ggplot(data = vgroup, mapping = aes(x=tag,y=AbsFreqChangeContemp)) + 
+  geom_jitter(aes(color='blue'),alpha=0.2) +
+  geom_boxplot(fill="bisque",color="black",alpha=0.3) + 
+  labs(x='Norway 2011 Major Allele Frequency',y='Absolute Frequency Change - 2011 to 2014') +
+  guides(color="none") +
+  theme_minimal()
+
+
+###### change vs quality
+
+nrow(Lof07_afreqs)
+nrow(Can40_afreqs)
+Can40_afreqs$qual=quals$QUAL
+
+tags <- c("[0-0.1)","[0.1-0.2)", "[0.2-0.3)", "[0.3-0.4)", "[0.4-0.5)", "[0.5-0.6)","[0.6-0.7)", "[0.7-0.8)","[0.8-0.9)", "[0.9-1.0)")
+
+v <- Can40_afreqs %>% select(qual,AbsFreqChange) #pick the variable 
+vgroup <- as_tibble(v) %>% 
+  mutate(tag = case_when(
+    qual < quantile(Can40_afreqs$qual,0.1) ~ tags[1],
+    qual >= quantile(Can40_afreqs$qual,0.1) & qual < quantile(Can40_afreqs$qual,0.2) ~ tags[2],
+    qual >= quantile(Can40_afreqs$qual,0.2) & qual < quantile(Can40_afreqs$qual,0.3) ~ tags[3],
+    qual >= quantile(Can40_afreqs$qual,0.3) & qual < quantile(Can40_afreqs$qual,0.4) ~ tags[4],
+    qual >= quantile(Can40_afreqs$qual,0.4) & qual < quantile(Can40_afreqs$qual,0.5) ~ tags[5],
+    qual >= quantile(Can40_afreqs$qual,0.5) & qual < quantile(Can40_afreqs$qual,0.6) ~ tags[6],
+    qual >= quantile(Can40_afreqs$qual,0.6) & qual < quantile(Can40_afreqs$qual,0.7) ~ tags[7],
+    qual >= quantile(Can40_afreqs$qual,0.7) & qual < quantile(Can40_afreqs$qual,0.8) ~ tags[8],
+    qual >= quantile(Can40_afreqs$qual,0.8) & qual < quantile(Can40_afreqs$qual,0.9) ~ tags[9],
+    qual >= quantile(Can40_afreqs$qual,0.9) ~ tags[10]
+  ))
+summary(vgroup)
+
+vgroup$tag <- factor(vgroup$tag,
+                     levels = tags,
+                     ordered = FALSE)
+summary(vgroup$tag)
+
+
+ggplot(data = vgroup, mapping = aes(x=tag,y=AbsFreqChange)) + 
+  geom_jitter(aes(color='blue'),alpha=0.2) +
+  geom_boxplot(fill="bisque",color="black",alpha=0.3) + 
+  labs(x='SNP Quality Quantile',y='Absolute Frequency Change - Canado 1940-2013') +
+  guides(color=FALSE) +
+  theme_minimal()
+
+
+Lof07_afreqs$qual=quals$QUAL
+
+tags <- c("[0-0.1)","[0.1-0.2)", "[0.2-0.3)", "[0.3-0.4)", "[0.4-0.5)", "[0.5-0.6)","[0.6-0.7)", "[0.7-0.8)","[0.8-0.9)", "[0.9-1.0)")
+
+v <- Lof07_afreqs %>% select(qual,AbsFreqChange11) #pick the variable 
+vgroup <- as_tibble(v) %>% 
+  mutate(tag = case_when(
+    qual < quantile(Can40_afreqs$qual,0.1) ~ tags[1],
+    qual >= quantile(Can40_afreqs$qual,0.1) & qual < quantile(Can40_afreqs$qual,0.2) ~ tags[2],
+    qual >= quantile(Can40_afreqs$qual,0.2) & qual < quantile(Can40_afreqs$qual,0.3) ~ tags[3],
+    qual >= quantile(Can40_afreqs$qual,0.3) & qual < quantile(Can40_afreqs$qual,0.4) ~ tags[4],
+    qual >= quantile(Can40_afreqs$qual,0.4) & qual < quantile(Can40_afreqs$qual,0.5) ~ tags[5],
+    qual >= quantile(Can40_afreqs$qual,0.5) & qual < quantile(Can40_afreqs$qual,0.6) ~ tags[6],
+    qual >= quantile(Can40_afreqs$qual,0.6) & qual < quantile(Can40_afreqs$qual,0.7) ~ tags[7],
+    qual >= quantile(Can40_afreqs$qual,0.7) & qual < quantile(Can40_afreqs$qual,0.8) ~ tags[8],
+    qual >= quantile(Can40_afreqs$qual,0.8) & qual < quantile(Can40_afreqs$qual,0.9) ~ tags[9],
+    qual >= quantile(Can40_afreqs$qual,0.9) ~ tags[10]
+  ))
+summary(vgroup)
+
+vgroup$tag <- factor(vgroup$tag,
+                     levels = tags,
+                     ordered = FALSE)
+summary(vgroup$tag)
+
+
+ggplot(data = vgroup, mapping = aes(x=tag,y=AbsFreqChange11)) + 
+  geom_jitter(aes(color='blue'),alpha=0.2) +
+  geom_boxplot(fill="bisque",color="black",alpha=0.3) + 
+  labs(x='SNP Quality Quantile',y='Absolute Frequency Change - Norway 1907-2011') +
+  guides(color=FALSE) +
+  theme_minimal()
+
+
+
+v <- Lof07_afreqs %>% select(qual,AbsFreqChange14) #pick the variable 
+vgroup <- as_tibble(v) %>% 
+  mutate(tag = case_when(
+    qual < quantile(Can40_afreqs$qual,0.1) ~ tags[1],
+    qual >= quantile(Can40_afreqs$qual,0.1) & qual < quantile(Can40_afreqs$qual,0.2) ~ tags[2],
+    qual >= quantile(Can40_afreqs$qual,0.2) & qual < quantile(Can40_afreqs$qual,0.3) ~ tags[3],
+    qual >= quantile(Can40_afreqs$qual,0.3) & qual < quantile(Can40_afreqs$qual,0.4) ~ tags[4],
+    qual >= quantile(Can40_afreqs$qual,0.4) & qual < quantile(Can40_afreqs$qual,0.5) ~ tags[5],
+    qual >= quantile(Can40_afreqs$qual,0.5) & qual < quantile(Can40_afreqs$qual,0.6) ~ tags[6],
+    qual >= quantile(Can40_afreqs$qual,0.6) & qual < quantile(Can40_afreqs$qual,0.7) ~ tags[7],
+    qual >= quantile(Can40_afreqs$qual,0.7) & qual < quantile(Can40_afreqs$qual,0.8) ~ tags[8],
+    qual >= quantile(Can40_afreqs$qual,0.8) & qual < quantile(Can40_afreqs$qual,0.9) ~ tags[9],
+    qual >= quantile(Can40_afreqs$qual,0.9) ~ tags[10]
+  ))
+summary(vgroup)
+
+vgroup$tag <- factor(vgroup$tag,
+                     levels = tags,
+                     ordered = FALSE)
+summary(vgroup$tag)
+
+
+ggplot(data = vgroup, mapping = aes(x=tag,y=AbsFreqChange14)) + 
+  geom_jitter(aes(color='blue'),alpha=0.2) +
+  geom_boxplot(fill="bisque",color="black",alpha=0.3) + 
+  labs(x='SNP Quality Quantile',y='Absolute Frequency Change - Norway 1907-2011') +
+  guides(color=FALSE) +
+  theme_minimal()
+
+
+###### frequency vs quality
+
+nrow(Lof07_afreqs)
+nrow(Can40_afreqs)
+Can40_afreqs$qual=quals$QUAL
+
+tags <- c("[0-0.1)","[0.1-0.2)", "[0.2-0.3)", "[0.3-0.4)", "[0.4-0.5)", "[0.5-0.6)","[0.6-0.7)", "[0.7-0.8)","[0.8-0.9)", "[0.9-1.0)")
+
+v <- Can40_afreqs %>% select(qual,ALT_FREQS) #pick the variable 
+vgroup <- as_tibble(v) %>% 
+  mutate(tag = case_when(
+    qual < quantile(Can40_afreqs$qual,0.1) ~ tags[1],
+    qual >= quantile(Can40_afreqs$qual,0.1) & qual < quantile(Can40_afreqs$qual,0.2) ~ tags[2],
+    qual >= quantile(Can40_afreqs$qual,0.2) & qual < quantile(Can40_afreqs$qual,0.3) ~ tags[3],
+    qual >= quantile(Can40_afreqs$qual,0.3) & qual < quantile(Can40_afreqs$qual,0.4) ~ tags[4],
+    qual >= quantile(Can40_afreqs$qual,0.4) & qual < quantile(Can40_afreqs$qual,0.5) ~ tags[5],
+    qual >= quantile(Can40_afreqs$qual,0.5) & qual < quantile(Can40_afreqs$qual,0.6) ~ tags[6],
+    qual >= quantile(Can40_afreqs$qual,0.6) & qual < quantile(Can40_afreqs$qual,0.7) ~ tags[7],
+    qual >= quantile(Can40_afreqs$qual,0.7) & qual < quantile(Can40_afreqs$qual,0.8) ~ tags[8],
+    qual >= quantile(Can40_afreqs$qual,0.8) & qual < quantile(Can40_afreqs$qual,0.9) ~ tags[9],
+    qual >= quantile(Can40_afreqs$qual,0.9) ~ tags[10]
+  ))
+summary(vgroup)
+
+vgroup$tag <- factor(vgroup$tag,
+                     levels = tags,
+                     ordered = FALSE)
+summary(vgroup$tag)
+
+
+ggplot(data = vgroup, mapping = aes(x=tag,y=ALT_FREQS)) + 
+  geom_jitter(aes(color='blue'),alpha=0.2) +
+  geom_boxplot(fill="bisque",color="black",alpha=0.3) + 
+  labs(x='SNP Quality Quantile',y='Canado 1940 Frequency') +
+  guides(color=FALSE) +
+  theme_minimal()
+
+v <- Can40_afreqs %>% select(qual,ContFreq) #pick the variable 
+vgroup <- as_tibble(v) %>% 
+  mutate(tag = case_when(
+    qual < quantile(Can40_afreqs$qual,0.1) ~ tags[1],
+    qual >= quantile(Can40_afreqs$qual,0.1) & qual < quantile(Can40_afreqs$qual,0.2) ~ tags[2],
+    qual >= quantile(Can40_afreqs$qual,0.2) & qual < quantile(Can40_afreqs$qual,0.3) ~ tags[3],
+    qual >= quantile(Can40_afreqs$qual,0.3) & qual < quantile(Can40_afreqs$qual,0.4) ~ tags[4],
+    qual >= quantile(Can40_afreqs$qual,0.4) & qual < quantile(Can40_afreqs$qual,0.5) ~ tags[5],
+    qual >= quantile(Can40_afreqs$qual,0.5) & qual < quantile(Can40_afreqs$qual,0.6) ~ tags[6],
+    qual >= quantile(Can40_afreqs$qual,0.6) & qual < quantile(Can40_afreqs$qual,0.7) ~ tags[7],
+    qual >= quantile(Can40_afreqs$qual,0.7) & qual < quantile(Can40_afreqs$qual,0.8) ~ tags[8],
+    qual >= quantile(Can40_afreqs$qual,0.8) & qual < quantile(Can40_afreqs$qual,0.9) ~ tags[9],
+    qual >= quantile(Can40_afreqs$qual,0.9) ~ tags[10]
+  ))
+summary(vgroup)
+
+vgroup$tag <- factor(vgroup$tag,
+                     levels = tags,
+                     ordered = FALSE)
+summary(vgroup$tag)
+
+
+ggplot(data = vgroup, mapping = aes(x=tag,y=ContFreq)) + 
+  geom_jitter(aes(color='blue'),alpha=0.2) +
+  geom_boxplot(fill="bisque",color="black",alpha=0.3) + 
+  labs(x='SNP Quality Quantile',y='Canado 2013 Frequency') +
+  guides(color=FALSE) +
+  theme_minimal()
+
+
+
+Lof07_afreqs$qual=quals$QUAL
+
+tags <- c("[0-0.1)","[0.1-0.2)", "[0.2-0.3)", "[0.3-0.4)", "[0.4-0.5)", "[0.5-0.6)","[0.6-0.7)", "[0.7-0.8)","[0.8-0.9)", "[0.9-1.0)")
+
+v <- Lof07_afreqs %>% select(qual,ALT_FREQS) #pick the variable 
+vgroup <- as_tibble(v) %>% 
+  mutate(tag = case_when(
+    qual < quantile(Can40_afreqs$qual,0.1) ~ tags[1],
+    qual >= quantile(Can40_afreqs$qual,0.1) & qual < quantile(Can40_afreqs$qual,0.2) ~ tags[2],
+    qual >= quantile(Can40_afreqs$qual,0.2) & qual < quantile(Can40_afreqs$qual,0.3) ~ tags[3],
+    qual >= quantile(Can40_afreqs$qual,0.3) & qual < quantile(Can40_afreqs$qual,0.4) ~ tags[4],
+    qual >= quantile(Can40_afreqs$qual,0.4) & qual < quantile(Can40_afreqs$qual,0.5) ~ tags[5],
+    qual >= quantile(Can40_afreqs$qual,0.5) & qual < quantile(Can40_afreqs$qual,0.6) ~ tags[6],
+    qual >= quantile(Can40_afreqs$qual,0.6) & qual < quantile(Can40_afreqs$qual,0.7) ~ tags[7],
+    qual >= quantile(Can40_afreqs$qual,0.7) & qual < quantile(Can40_afreqs$qual,0.8) ~ tags[8],
+    qual >= quantile(Can40_afreqs$qual,0.8) & qual < quantile(Can40_afreqs$qual,0.9) ~ tags[9],
+    qual >= quantile(Can40_afreqs$qual,0.9) ~ tags[10]
+  ))
+summary(vgroup)
+
+vgroup$tag <- factor(vgroup$tag,
+                     levels = tags,
+                     ordered = FALSE)
+summary(vgroup$tag)
+
+
+ggplot(data = vgroup, mapping = aes(x=tag,y=ALT_FREQS)) + 
+  geom_jitter(aes(color='blue'),alpha=0.2) +
+  geom_boxplot(fill="bisque",color="black",alpha=0.3) + 
+  labs(x='SNP Quality Quantile',y='Norway 1907 Frequency') +
+  guides(color=FALSE) +
+  theme_minimal()
+
+v <- Lof07_afreqs %>% select(qual,Freq11) #pick the variable 
+vgroup <- as_tibble(v) %>% 
+  mutate(tag = case_when(
+    qual < quantile(Can40_afreqs$qual,0.1) ~ tags[1],
+    qual >= quantile(Can40_afreqs$qual,0.1) & qual < quantile(Can40_afreqs$qual,0.2) ~ tags[2],
+    qual >= quantile(Can40_afreqs$qual,0.2) & qual < quantile(Can40_afreqs$qual,0.3) ~ tags[3],
+    qual >= quantile(Can40_afreqs$qual,0.3) & qual < quantile(Can40_afreqs$qual,0.4) ~ tags[4],
+    qual >= quantile(Can40_afreqs$qual,0.4) & qual < quantile(Can40_afreqs$qual,0.5) ~ tags[5],
+    qual >= quantile(Can40_afreqs$qual,0.5) & qual < quantile(Can40_afreqs$qual,0.6) ~ tags[6],
+    qual >= quantile(Can40_afreqs$qual,0.6) & qual < quantile(Can40_afreqs$qual,0.7) ~ tags[7],
+    qual >= quantile(Can40_afreqs$qual,0.7) & qual < quantile(Can40_afreqs$qual,0.8) ~ tags[8],
+    qual >= quantile(Can40_afreqs$qual,0.8) & qual < quantile(Can40_afreqs$qual,0.9) ~ tags[9],
+    qual >= quantile(Can40_afreqs$qual,0.9) ~ tags[10]
+  ))
+summary(vgroup)
+
+vgroup$tag <- factor(vgroup$tag,
+                     levels = tags,
+                     ordered = FALSE)
+summary(vgroup$tag)
+
+
+ggplot(data = vgroup, mapping = aes(x=tag,y=Freq11)) + 
+  geom_jitter(aes(color='blue'),alpha=0.2) +
+  geom_boxplot(fill="bisque",color="black",alpha=0.3) + 
+  labs(x='SNP Quality Quantile',y='Norway 2011 Frequency') +
+  guides(color=FALSE) +
+  theme_minimal()
+
+v <- Lof07_afreqs %>% select(qual,Freq14) #pick the variable 
+vgroup <- as_tibble(v) %>% 
+  mutate(tag = case_when(
+    qual < quantile(Can40_afreqs$qual,0.1) ~ tags[1],
+    qual >= quantile(Can40_afreqs$qual,0.1) & qual < quantile(Can40_afreqs$qual,0.2) ~ tags[2],
+    qual >= quantile(Can40_afreqs$qual,0.2) & qual < quantile(Can40_afreqs$qual,0.3) ~ tags[3],
+    qual >= quantile(Can40_afreqs$qual,0.3) & qual < quantile(Can40_afreqs$qual,0.4) ~ tags[4],
+    qual >= quantile(Can40_afreqs$qual,0.4) & qual < quantile(Can40_afreqs$qual,0.5) ~ tags[5],
+    qual >= quantile(Can40_afreqs$qual,0.5) & qual < quantile(Can40_afreqs$qual,0.6) ~ tags[6],
+    qual >= quantile(Can40_afreqs$qual,0.6) & qual < quantile(Can40_afreqs$qual,0.7) ~ tags[7],
+    qual >= quantile(Can40_afreqs$qual,0.7) & qual < quantile(Can40_afreqs$qual,0.8) ~ tags[8],
+    qual >= quantile(Can40_afreqs$qual,0.8) & qual < quantile(Can40_afreqs$qual,0.9) ~ tags[9],
+    qual >= quantile(Can40_afreqs$qual,0.9) ~ tags[10]
+  ))
+summary(vgroup)
+
+vgroup$tag <- factor(vgroup$tag,
+                     levels = tags,
+                     ordered = FALSE)
+summary(vgroup$tag)
+
+
+ggplot(data = vgroup, mapping = aes(x=tag,y=Freq14)) + 
+  geom_jitter(aes(color='blue'),alpha=0.2) +
+  geom_boxplot(fill="bisque",color="black",alpha=0.3) + 
+  labs(x='SNP Quality Quantile',y='Norway 2014 Frequency') +
+  guides(color=FALSE) +
+  theme_minimal()
+
+
+### by linkage group
+
+ggplot(data = Can40_afreqs, mapping = aes(x=CHROM,y=qual)) + 
+  geom_jitter(aes(color='blue'),alpha=0.2) +
+  geom_boxplot(fill="bisque",color="black",alpha=0.3) + 
+  labs(x='Linkage Group',y='SNP Quality') +
+  guides(color=FALSE) +
+  theme_minimal()
+
+ggplot(data = Lof07_afreqs, mapping = aes(x=CHROM,y=qual)) + 
+  geom_jitter(aes(color='blue'),alpha=0.2) +
+  geom_boxplot(fill="bisque",color="black",alpha=0.3) + 
+  labs(x='Linkage Group',y='SNP Quality') +
+  guides(color=FALSE) +
+  theme_minimal()
